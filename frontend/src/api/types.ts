@@ -42,6 +42,32 @@ export interface BackgroundInfo {
   version: string
 }
 
+export interface User {
+  id: string
+  email: string
+  name: string
+  created_at?: string
+}
+
+export interface AuthResponse {
+  user: User
+  token: string
+}
+
+export interface UserBook {
+  id: string
+  user_id?: string
+  title: string
+  status: string
+  message_count: number
+  photo_count: number
+  video_count: number
+  date_range?: string
+  options_json?: string
+  created_at?: string
+  updated_at?: string
+}
+
 export type Mode = 'book' | 'album'
 export type PageSize = 'A4' | 'Letter' | 'A5' | 'Square'
 export type Theme = 'classic' | 'clean' | 'ink'

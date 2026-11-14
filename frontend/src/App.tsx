@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { AuthModal } from './components/AuthModal'
 import { TopBar } from './components/TopBar'
+import { useAuth } from './hooks/useAuth'
 import { useRoute } from './hooks/useRoute'
 import { useSession } from './hooks/useSession'
 import { useTheme } from './hooks/useTheme'
@@ -12,6 +14,7 @@ export default function App() {
   const [route, go] = useRoute()
   const [theme, cycleTheme] = useTheme()
   const session = useSession()
+  const auth = useAuth()
   const [options, setOptions] = useState<RenderOptions>(() => loadOptions())
 
   // Remember paper, style and album choices for the next visit.
@@ -27,7 +30,23 @@ export default function App() {
 
   return (
     <div className="app">
-      <TopBar route={route} theme={theme} onTheme={cycleTheme} />
+      <TopBar
+        route={route}
+        theme={theme}
+        onTheme={cycleTheme}
+        user={auth.user}
+        books={auth.books}
+        booksLoading={auth.booksLoading}
+        currentJobId={session.job?.id}
+        onOpenLogin={auth.openLogin}
+        onOpenSignup={auth.openSignup}
+        onLogout={auth.logout}
+        onSelectBook={(jobId) => {
+          void session.openJob(jobId)
+          go('app')
+        }}
+        onDeleteBook={auth.deleteBook}
+      />
       {route === 'home' ? (
         <div className="home-scroll">
           <Home onStart={() => go('app')} onSample={() => go('sample')} />
@@ -35,6 +54,16 @@ export default function App() {
       ) : (
         <Workspace session={session} options={options} setOptions={setOptions} />
       )}
+
+      <AuthModal
+        open={auth.modalOpen}
+        initialTab={auth.modalTab}
+        activeJobTitle={session.job?.suggested_title}
+        activeJobId={session.job?.id}
+        onClose={auth.closeModal}
+        onLogin={auth.login}
+        onSignup={auth.signup}
+      />
     </div>
   )
 }

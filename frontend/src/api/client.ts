@@ -1,7 +1,20 @@
 import { describeError } from '../lib/format'
-import type { DateOrder, ExportJob, Insights, Job, Preview, RenderOptions } from './types'
+import type { AuthResponse, DateOrder, ExportJob, Insights, Job, Preview, RenderOptions, User, UserBook } from './types'
 
 const BASE = '/api/v1'
+const TOKEN_KEY = 'chatbook_auth_token'
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function setAuthToken(token: string | null): void {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token)
+  } else {
+    localStorage.removeItem(TOKEN_KEY)
+  }
+}
 
 export class ApiError extends Error {
   readonly status: number
@@ -23,9 +36,15 @@ async function failure(res: Response): Promise<ApiError> {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers || {})
+  const token = getAuthToken()
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
   let res: Response
   try {
-    res = await fetch(BASE + path, init)
+    res = await fetch(BASE + path, { ...init, headers })
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err
     throw new ApiError(0, 'The server cannot be reached. Check that the backend is running.')
@@ -46,6 +65,10 @@ function upload(path: string, form: FormData, onProgress?: (fraction: number) =>
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', BASE + path)
+    const token = getAuthToken()
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    }
     xhr.responseType = 'json'
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total)
@@ -107,4 +130,15 @@ export const api = {
   cancelExport: (id: string, exportId: string) => request<void>(`/jobs/${id}/exports/${exportId}`, { method: 'DELETE' }),
   fileUrl: (id: string, exportId: string, name: string, inline = false) =>
     `${BASE}/jobs/${id}/exports/${exportId}/files/${encodeURIComponent(name)}${inline ? '?inline=true' : ''}`,
+
+  // Authentication & User Data
+  signup: (email: string, password: string, name = '') =>
+    request<AuthResponse>('/auth/signup', json({ email, password, name })),
+  login: (email: string, password: string) =>
+    request<AuthResponse>('/auth/login', json({ email, password })),
+  getMe: () => request<{ user: User }>('/auth/me'),
+  logout: () => request<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
+  claimJob: (jobId: string) => request<{ ok: boolean }>(`/auth/claim-job/${jobId}`, { method: 'POST' }),
+  listUserBooks: () => request<UserBook[]>('/user/books'),
+  deleteUserBook: (jobId: string) => request<{ ok: boolean }>(`/user/books/${jobId}`, { method: 'DELETE' }),
 }

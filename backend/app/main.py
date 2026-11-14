@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app import __version__
-from app.api import exports, health, jobs
+from app.api import auth, exports, health, jobs
 from app.config import Settings, get_settings
 from app.state import Services
 
@@ -41,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        await services.db.init_models()
         task = asyncio.create_task(_cleanup_loop(services))
         try:
             yield
@@ -51,6 +52,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             services.ingestor.shutdown()
             services.exports.shutdown()
             services.previews.shutdown()
+            await services.db.close()
 
     app = FastAPI(title="Chatbook API", version=__version__, lifespan=lifespan)
     app.state.services = services
@@ -61,7 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
         expose_headers=["Content-Disposition"],
     )
-    for router in (health.router, jobs.router, exports.router):
+    for router in (health.router, jobs.router, exports.router, auth.router):
         app.include_router(router, prefix="/api/v1")
 
     if settings.static_dir:  # serve the built frontend from the same origin

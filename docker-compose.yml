@@ -5,10 +5,32 @@ services:
       - "8000:8000"
     environment:
       CHATBOOK_JOB_TTL_HOURS: "24"
+      CHATBOOK_DATABASE_URL: "postgresql+asyncpg://chatbook:chatbook_secret@db:5432/chatbook"
       # CHATBOOK_MAX_UPLOAD_MB: "4096"
     volumes:
       - chatbook-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: chatbook
+      POSTGRES_PASSWORD: chatbook_secret
+      POSTGRES_DB: chatbook
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatbook -d chatbook"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:
   chatbook-data:
+  postgres-data:

@@ -40,8 +40,20 @@ class Settings(BaseSettings):
     # Folder with the built frontend. None means API only.
     static_dir: Path | None = Field(default_factory=_default_static_dir)
 
+    # Database URL. If None, defaults to SQLite at data_dir/chatbook.db.
+    # For PostgreSQL: postgresql+asyncpg://user:pass@host:5432/dbname
+    database_url: str | None = None
+
     # Chromium needs this flag when it runs as root inside a container.
     chromium_no_sandbox: bool = False
+
+    @property
+    def resolved_database_url(self) -> str:
+        if self.database_url:
+            return self.database_url
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        db_file = (self.data_dir / "chatbook.db").resolve().as_posix()
+        return f"sqlite+aiosqlite:///{db_file}"
 
     @property
     def jobs_dir(self) -> Path:

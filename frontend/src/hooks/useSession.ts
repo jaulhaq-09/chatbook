@@ -19,6 +19,7 @@ export interface Session {
   /** Resolve to an error message, or null when it worked. */
   setBackground: (file: File) => Promise<string | null>
   removeBackground: () => Promise<string | null>
+  openJob: (id: string) => Promise<void>
   reset: () => Promise<void>
 }
 
@@ -128,6 +129,21 @@ export function useSession(): Session {
   const setBackground = useCallback((file: File) => changeBackground((id) => api.setBackground(id, file)), [changeBackground])
   const removeBackground = useCallback(() => changeBackground((id) => api.removeBackground(id)), [changeBackground])
 
+  const openJob = useCallback(
+    async (id: string) => {
+      setError(null)
+      setUploading(false)
+      try {
+        const next = await api.getJob(id)
+        setJob(next)
+        remember(next.id)
+      } catch (err) {
+        fail(err)
+      }
+    },
+    [fail],
+  )
+
   const reset = useCallback(async () => {
     const current = jobRef.current
     setJob(null)
@@ -190,5 +206,5 @@ export function useSession(): Session {
   else if (job?.status === 'ready') phase = 'ready'
   else if (job?.status === 'failed') phase = 'failed'
 
-  return { job, phase, uploadFraction, error, restoring, start, startSample, addFiles, setDateOrder, setBackground, removeBackground, reset }
+  return { job, phase, uploadFraction, error, restoring, start, startSample, addFiles, setDateOrder, setBackground, removeBackground, openJob, reset }
 }
