@@ -1,0 +1,48 @@
+{% set play_icon %}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>{% endset %}
+{% macro caption(it) %}{% if it.caption_html %}<div class="txt cap">{{ it.caption_html }}<span class="tm">{{ it.time }}</span></div>{% endif %}{% endmacro %}
+{% macro stamp(it) %}{% if not it.caption_html %}<div class="tmr">{{ it.time }}</div>{% endif %}{% endmacro %}
+{% for it in items %}
+{% if it.type == 'month' %}
+<h2 class="month">{{ it.label }}</h2>
+{% elif it.type == 'day' %}
+<div class="it day"><span class="chip">{{ it.label }}</span></div>
+{% elif it.type == 'sys' %}
+<div class="it sysm"><span class="chip">{{ it.text }}</span></div>
+{% else %}
+{% set k = it.kind %}
+<div class="it m {{ 'first' if it.first else 'cont' }}">
+<div class="row {{ it.side }}">
+{% if k == 'sticker' %}
+  <div class="stk"><img src="{{ it.src }}" alt=""></div>
+{% else %}
+  <div class="bub {{ it.side }}{{ ' med' if k in ('image', 'video') }}"{% if k in ('image', 'video') %} style="width:{{ it.w + 8 }}px"{% endif %}>
+  {% if it.name %}<div class="nm" style="color:{{ it.name_color }}">{{ it.name }}</div>{% endif %}
+  {% if k == 'text' %}
+    <div class="txt">{{ it.text_html }}<span class="tm">{{ it.time }}</span></div>
+  {% elif k == 'deleted' %}
+    <div class="txt"><span class="del"><svg class="ban" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>This message was deleted</span><span class="tm">{{ it.time }}</span></div>
+  {% elif k == 'label' %}
+    <div class="txt"><span class="lbl">{{ it.label }}</span>{% if it.caption_html %}{{ it.caption_html }}{% endif %}<span class="tm">{{ it.time }}</span></div>
+  {% elif k in ('image', 'video') %}
+    <div class="mw{{ '' if it.src else ' dk' }}" style="width:{{ it.w }}px;height:{{ it.h }}px">
+      {% if it.src %}<img src="{{ it.src }}" alt="">{% endif %}
+      {% if k == 'video' %}<span class="play">{{ play_icon }}</span>{% if it.dur %}<span class="dur">{{ it.dur }}</span>{% endif %}{% endif %}
+      {% if not it.caption_html %}<span class="ov">{{ it.time }}</span>{% endif %}
+    </div>
+    {{ caption(it) }}
+  {% elif k == 'voice' %}
+    <div class="voice"><span class="vbtn">{{ play_icon }}</span><div class="wave">{% for b in it.bars %}<i style="height:{{ b }}px"></i>{% endfor %}</div><span class="vd">{{ it.dur or '' }}</span></div>
+    {{ caption(it) }}{{ stamp(it) }}
+  {% elif k == 'doc' %}
+    <div class="doc"><span class="dic{{ ' pdf' if it.ext == 'PDF' }}">{{ it.ext }}</span><span class="dn">{{ it.doc_name }}</span></div>
+    {{ caption(it) }}{{ stamp(it) }}
+  {% else %}
+    <div class="miss"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg><span>{{ it.label }}</span></div>
+    {{ caption(it) }}{{ stamp(it) }}
+  {% endif %}
+  </div>
+{% endif %}
+</div>
+</div>
+{% endif %}
+{% endfor %}

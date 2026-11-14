@@ -1,0 +1,17 @@
+{% set play_icon %}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>{% endset %}
+{% for g in groups %}
+<section class="grpbox {{ fit_class }} cols-{{ cols }}">
+  {% if g.label %}<h2 class="grp">{{ g.label }}</h2>{% endif %}
+  <div class="grid">
+  {% for c in g.cells %}
+    <figure class="cell">
+      <div class="cimg{{ '' if c.src else ' novid' }}">
+        {% if c.src %}<img src="{{ c.src }}" alt="">{% endif %}
+        {% if c.video %}<span class="play sm">{{ play_icon }}</span>{% if c.dur %}<span class="dur">{{ c.dur }}</span>{% endif %}{% endif %}
+      </div>
+      {% if c.caption %}<figcaption class="acap">{{ c.caption }}</figcaption>{% endif %}
+    </figure>
+  {% endfor %}
+  </div>
+</section>
+{% endfor %}

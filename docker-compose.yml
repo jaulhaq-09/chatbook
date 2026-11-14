@@ -1,0 +1,14 @@
+services:
+  chatbook:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      CHATBOOK_JOB_TTL_HOURS: "24"
+      # CHATBOOK_MAX_UPLOAD_MB: "4096"
+    volumes:
+      - chatbook-data:/data
+    restart: unless-stopped
+
+volumes:
+  chatbook-data:

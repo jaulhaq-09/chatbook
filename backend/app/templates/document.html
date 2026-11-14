@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ doc_title }}</title>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body class="mode-{{ mode }}{{ ' preview' if preview }}">
+{% macro face(kind, d) %}
+<section class="face {{ kind }} fs-{{ cover_style }}">
+  <div class="fx fx1"></div>
+  <div class="fx fx2"></div>
+  {% if motif %}<div class="fm">{{ motif | safe }}</div>{% endif %}
+  <div class="fc">
+    <div class="fh">
+      {% if d.kicker %}<p class="fk">{{ d.kicker }}</p>{% endif %}
+      {% if d.title %}<h1 class="ft">{{ d.title }}</h1>{% endif %}
+    </div>
+    <div class="fb">
+      <div class="frule"></div>
+      {% if d.sub %}<p class="fsub">{{ d.sub }}</p>{% endif %}
+      {% if d.tag %}<p class="ftag">{{ d.tag }}</p>{% endif %}
+      {% if d.sign %}<p class="fsign">{{ d.sign }}</p>{% endif %}
+    </div>
+  </div>
+  {% if d.foot_l or d.foot_r %}
+  <div class="ff"><span class="fl">{{ d.foot_l }}</span><span class="fr">{{ d.foot_r }}</span></div>
+  {% endif %}
+</section>
+{% endmacro %}
+{% if preload %}
+<img src="{{ preload }}" alt="" aria-hidden="true" style="position:absolute;width:1px;height:1px;opacity:0">
+{% endif %}
+{% if cover %}
+{{ face('cover', cover) }}
+{% endif %}
+{% if toc %}
+<section class="toc">
+  <h1 class="toc-title">Contents</h1>
+  <div class="toc-list{{ ' cols' if toc | length > 22 }}">
+  {% for e in toc %}
+    <div class="tl"><span>{{ e.label }}</span><i></i><b>{{ e.page }}</b></div>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+<main class="content">
+{% if mode == 'book' %}
+{% include 'book_items.html' %}
+{% else %}
+{% include 'album_items.html' %}
+{% endif %}
+</main>
+{% if back %}
+{{ face('back', back) }}
+{% endif %}
+</body>
+</html>
