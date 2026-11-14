@@ -225,7 +225,7 @@ def preview_pdf(job_id: str, body: PreviewRequest, svc: Svc) -> FileResponse:
         path = svc.previews.render(job_id, job, plan, volume, page)
     except Exception as exc:  # noqa: BLE001 - Chromium problems should read as one clear message
         log.exception("preview pdf failed")
-        raise HTTPException(500, "The preview pages could not be made. Check that Chromium is installed.") from exc
+        raise HTTPException(500, "The preview pages could not be made. Please try again.") from exc
     return FileResponse(path, media_type="application/pdf", headers={"Cache-Control": "no-store"})
 
 

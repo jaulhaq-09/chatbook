@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from pathlib import Path
 
@@ -118,7 +119,8 @@ def _render_one(engine, plan, vol, body, render_dir, pdf_path, toc_pages, cancel
         html_path.write_text(html, encoding="utf-8")
         engine.render(html_path, pdf_path)
     finally:
-        html_path.unlink(missing_ok=True)
+        with contextlib.suppress(OSError):
+            html_path.unlink(missing_ok=True)
     return read_outline(pdf_path)
 
 
@@ -197,5 +199,6 @@ def _build_sliced(engine, plan, vol, slices, render_dir, out_path, cancel, on_st
         writer.close()
     finally:
         for part in parts:
-            part.unlink(missing_ok=True)
+            with contextlib.suppress(OSError):
+                part.unlink(missing_ok=True)
     return sum(counts)

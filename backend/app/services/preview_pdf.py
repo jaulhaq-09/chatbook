@@ -7,9 +7,11 @@ pages again and again.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -76,22 +78,32 @@ class PreviewRenderer:
         html = render_section_html(
             plan, vol, page=page, per_page=self.settings.preview_items_per_page, media_base="../media/"
         )
-        html_path = folder / f"{path.stem}.html"
-        tmp = folder / f"{path.stem}.tmp"
+        html_path = folder / f"{path.stem}-{uuid.uuid4().hex[:8]}.html"
+        tmp = folder / f"{path.stem}-{uuid.uuid4().hex[:8]}.tmp"
         try:
             html_path.write_text(html, encoding="utf-8")
             with PdfEngine(self.settings.chromium_no_sandbox) as engine:
                 engine.render(html_path, tmp)
-            tmp.replace(path)
+            try:
+                tmp.replace(path)
+            except OSError:
+                if not path.is_file():
+                    raise
         finally:
-            html_path.unlink(missing_ok=True)
-            tmp.unlink(missing_ok=True)
+            with contextlib.suppress(OSError):
+                html_path.unlink(missing_ok=True)
+            with contextlib.suppress(OSError):
+                tmp.unlink(missing_ok=True)
 
     @staticmethod
     def _prune(folder: Path) -> None:
-        files = sorted(folder.glob("preview-*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
-        for old in files[KEEP:]:
-            old.unlink(missing_ok=True)
+        try:
+            files = sorted(folder.glob("preview-*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+            for old in files[KEEP:]:
+                with contextlib.suppress(OSError):
+                    old.unlink(missing_ok=True)
+        except Exception:
+            pass
 
 
 def section_count(plan: Plan, volume: int, per_page: int) -> int:

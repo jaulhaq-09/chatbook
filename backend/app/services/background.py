@@ -8,6 +8,7 @@ every PDF viewer and printer.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import io
 import uuid
@@ -78,7 +79,8 @@ def store_picture(job_dir: Path, source: BinaryIO, filename: str) -> dict[str, A
 
 def clear(job_dir: Path) -> None:
     for path in (original_path(job_dir), thumb_path(job_dir)):
-        path.unlink(missing_ok=True)
+        with contextlib.suppress(OSError):
+            path.unlink(missing_ok=True)
 
 
 def _page_pixels(spec: PageSpec, quality: str) -> tuple[int, int]:
@@ -141,17 +143,29 @@ def prepare(
             result = compose(picture, size, paper, opts.fit, opts.opacity)
         buffer = io.BytesIO()
         result.save(buffer, "JPEG", quality=90 if quality == "print" else 85, optimize=True)
-        tmp = target.with_suffix(".tmp")
-        tmp.write_bytes(buffer.getvalue())
-        tmp.replace(target)
-        _prune(render_dir, keep=name)
+        tmp = target.with_name(f"{target.stem}-{uuid.uuid4().hex[:8]}.tmp")
+        try:
+            tmp.write_bytes(buffer.getvalue())
+            try:
+                tmp.replace(target)
+            except OSError:
+                if not target.is_file():
+                    raise
+            _prune(render_dir, keep=name)
+        finally:
+            with contextlib.suppress(OSError):
+                tmp.unlink(missing_ok=True)
     else:
         target.touch()
     return name
 
 
 def _prune(render_dir: Path, keep: str) -> None:
-    files = sorted(render_dir.glob("bg-*.jpg"), key=lambda p: p.stat().st_mtime, reverse=True)
-    for old in files[KEEP:]:
-        if old.name != keep:
-            old.unlink(missing_ok=True)
+    try:
+        files = sorted(render_dir.glob("bg-*.jpg"), key=lambda p: p.stat().st_mtime, reverse=True)
+        for old in files[KEEP:]:
+            if old.name != keep:
+                with contextlib.suppress(OSError):
+                    old.unlink(missing_ok=True)
+    except Exception:
+        pass
