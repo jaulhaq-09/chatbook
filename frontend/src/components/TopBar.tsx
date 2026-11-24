@@ -38,7 +38,7 @@ export function TopBar({
   const inApp = route !== 'home'
   return (
     <header className="topbar">
-      <a className="brand" href="#/" aria-label="Chatbook home">
+      <a className="brand" href={user ? '#/app' : '#/'} aria-label="Chatbook home">
         <span className="logo" aria-hidden="true">
           <svg viewBox="0 0 32 32" width="22" height="22">
             <path d="M8 9h16v10H14l-6 5z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
@@ -47,14 +47,23 @@ export function TopBar({
         <span className="brand-name">Chatbook</span>
         <span className="brand-sub">Chats to print-ready PDF</span>
       </a>
-      <nav className="topnav" aria-label="Main">
-        <a href="#/" className={!inApp ? 'on' : ''}>
-          Home
-        </a>
-        <a href="#/app" className={inApp ? 'on' : ''}>
-          Workspace
-        </a>
-      </nav>
+
+      {user ? (
+        <nav className="topnav" aria-label="Main">
+          <a href="#/app" className={inApp ? 'on' : ''}>
+            Workspace
+          </a>
+          <a href="#/" className={!inApp ? 'on' : ''}>
+            Home
+          </a>
+        </nav>
+      ) : (
+        <nav className="topnav" aria-label="Main">
+          <a href="#how-it-works">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+      )}
 
       <div className="topbar-actions">
         <UserMenu

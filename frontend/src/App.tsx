@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AuthModal } from './components/AuthModal'
 import { TopBar } from './components/TopBar'
 import { useAuth } from './hooks/useAuth'
@@ -20,13 +20,49 @@ export default function App() {
   // Remember paper, style and album choices for the next visit.
   useEffect(() => saveOptions(options), [options])
 
-  // "Try a sample" from the home page: wait until the check for an earlier chat is over, then start it once.
+  // Route protection: Workspace requires an authenticated session.
+  // If not logged in, redirect to home and prompt login.
+  useEffect(() => {
+    if (!auth.loading && !auth.user && route !== 'home') {
+      go('home')
+      auth.openLogin()
+    }
+  }, [auth.loading, auth.user, route, go, auth])
+
+  // "Try a sample": only for logged-in users; if guest, prompt login first.
   const { phase, restoring, startSample } = session
   useEffect(() => {
     if (route !== 'sample' || restoring) return
+    if (!auth.loading && !auth.user) {
+      go('home')
+      auth.openLogin()
+      return
+    }
     if (phase !== 'uploading') void startSample()
     window.location.replace('#/app')
-  }, [route, restoring, phase, startSample])
+  }, [route, restoring, phase, startSample, auth.loading, auth.user, go, auth])
+
+  const handleLogin = useCallback(
+    async (email: string, pass: string, jobId?: string | null) => {
+      await auth.login(email, pass, jobId)
+      go('app')
+    },
+    [auth, go]
+  )
+
+  const handleSignup = useCallback(
+    async (email: string, pass: string, name: string, jobId?: string | null) => {
+      await auth.signup(email, pass, name, jobId)
+      go('app')
+    },
+    [auth, go]
+  )
+
+  const handleLogout = useCallback(async () => {
+    await auth.logout()
+    await session.reset()
+    go('home')
+  }, [auth, session, go])
 
   return (
     <div className="app">
@@ -40,16 +76,21 @@ export default function App() {
         currentJobId={session.job?.id}
         onOpenLogin={auth.openLogin}
         onOpenSignup={auth.openSignup}
-        onLogout={auth.logout}
+        onLogout={handleLogout}
         onSelectBook={(jobId) => {
           void session.openJob(jobId)
           go('app')
         }}
         onDeleteBook={auth.deleteBook}
       />
-      {route === 'home' ? (
+      {route === 'home' || (!auth.user && !auth.loading) ? (
         <div className="home-scroll">
-          <Home onStart={() => go('app')} onSample={() => go('sample')} />
+          <Home
+            user={auth.user}
+            onStart={() => go('app')}
+            onSample={() => go('sample')}
+            onOpenAuth={(tab) => (tab === 'login' ? auth.openLogin() : auth.openSignup())}
+          />
         </div>
       ) : (
         <Workspace session={session} options={options} setOptions={setOptions} />
@@ -61,8 +102,8 @@ export default function App() {
         activeJobTitle={session.job?.suggested_title}
         activeJobId={session.job?.id}
         onClose={auth.closeModal}
-        onLogin={auth.login}
-        onSignup={auth.signup}
+        onLogin={handleLogin}
+        onSignup={handleSignup}
       />
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import type { User } from '../api/types'
 
 const STEPS = [
   { n: '1', title: 'Export your chat', text: 'Get your chat out of WhatsApp, Instagram or Facebook, with photos and videos. You get one .zip file.' },
@@ -202,7 +203,14 @@ function GetYourChat() {
   )
 }
 
-export function Home({ onStart, onSample }: { onStart: () => void; onSample: () => void }) {
+interface HomeProps {
+  user: User | null
+  onStart: () => void
+  onSample: () => void
+  onOpenAuth: (tab: 'login' | 'signup') => void
+}
+
+export function Home({ user, onStart, onSample, onOpenAuth }: HomeProps) {
   return (
     <div className="home">
       <section className="hero">
@@ -215,12 +223,25 @@ export function Home({ onStart, onSample }: { onStart: () => void; onSample: () 
             Every message, photo and video exactly where it was sent. Chatbook makes a clean, print-ready PDF or a photo album from your WhatsApp, Instagram or Facebook chat, in a couple of minutes.
           </p>
           <div className="hero-cta">
-            <button type="button" className="btn primary big" onClick={onStart}>
-              Start with your chat
-            </button>
-            <button type="button" className="btn big" onClick={onSample}>
-              Try a sample
-            </button>
+            {user ? (
+              <>
+                <button type="button" className="btn primary big" onClick={onStart}>
+                  Go to Workspace
+                </button>
+                <button type="button" className="btn big" onClick={onSample}>
+                  Try a sample
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="btn primary big" onClick={() => onOpenAuth('signup')}>
+                  Start with your chat
+                </button>
+                <button type="button" className="btn big" onClick={() => onOpenAuth('login')}>
+                  Log in
+                </button>
+              </>
+            )}
           </div>
           <ul className="hero-points">
             <li>A4, Letter, A5 or square</li>
@@ -277,7 +298,7 @@ export function Home({ onStart, onSample }: { onStart: () => void; onSample: () 
         </div>
       </section>
 
-      <section className="block">
+      <section className="block" id="how-it-works">
         <h2>How it works</h2>
         <ol className="steps">
           {STEPS.map((s) => (
@@ -292,7 +313,7 @@ export function Home({ onStart, onSample }: { onStart: () => void; onSample: () 
 
       <GetYourChat />
 
-      <section className="block">
+      <section className="block" id="features">
         <h2>Everything for a book that feels like the chat</h2>
         <div className="features">
           {FEATURES.map((f) => (
@@ -309,7 +330,7 @@ export function Home({ onStart, onSample }: { onStart: () => void; onSample: () 
         </div>
       </section>
 
-      <section className="block narrow">
+      <section className="block narrow" id="faq">
         <h2>Questions</h2>
         <div className="faq">
           {FAQ.map((f) => (
@@ -325,10 +346,16 @@ export function Home({ onStart, onSample }: { onStart: () => void; onSample: () 
         <h2>Ready when your export is</h2>
         <p>Try the sample first if you just want to see what it makes.</p>
         <div className="hero-cta center">
-          <button type="button" className="btn primary big" onClick={onStart}>
-            Open the workspace
-          </button>
-          <button type="button" className="btn big" onClick={onSample}>
+          {user ? (
+            <button type="button" className="btn primary big" onClick={onStart}>
+              Open the workspace
+            </button>
+          ) : (
+            <button type="button" className="btn primary big" onClick={() => onOpenAuth('signup')}>
+              Sign up to start
+            </button>
+          )}
+          <button type="button" className="btn big" onClick={user ? onSample : () => onOpenAuth('login')}>
             Try a sample
           </button>
         </div>

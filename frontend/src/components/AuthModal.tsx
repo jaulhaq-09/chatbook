@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
 interface Props {
@@ -27,6 +27,13 @@ export function AuthModal({
   const [claimActive, setClaimActive] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setTab(initialTab)
+      setError(null)
+    }
+  }, [initialTab, open])
 
   if (!open) return null
 
