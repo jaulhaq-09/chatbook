@@ -5,7 +5,7 @@ import { UserMenu } from './UserMenu'
 import { Icon } from './ui'
 
 interface Props {
-  route: Route
+  route?: Route
   theme: ThemePref
   onTheme: () => void
   user: User | null
@@ -20,7 +20,6 @@ interface Props {
 }
 
 export function TopBar({
-  route,
   theme,
   onTheme,
   user,
@@ -35,7 +34,6 @@ export function TopBar({
 }: Props) {
   const icon = theme === 'light' ? 'sun' : theme === 'dark' ? 'moon' : 'auto'
   const name = theme === 'system' ? 'Match system' : theme === 'light' ? 'Light' : 'Dark'
-  const inApp = route !== 'home'
   return (
     <header className="topbar">
       <a className="brand" href={user ? '#/app' : '#/'} aria-label="Chatbook home">
@@ -48,16 +46,7 @@ export function TopBar({
         <span className="brand-sub">Chats to print-ready PDF</span>
       </a>
 
-      {user ? (
-        <nav className="topnav" aria-label="Main">
-          <a href="#/app" className={inApp ? 'on' : ''}>
-            Workspace
-          </a>
-          <a href="#/" className={!inApp ? 'on' : ''}>
-            Home
-          </a>
-        </nav>
-      ) : (
+      {!user && (
         <nav className="topnav" aria-label="Main">
           <a href="#how-it-works">How it works</a>
           <a href="#features">Features</a>

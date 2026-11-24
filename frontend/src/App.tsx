@@ -20,12 +20,20 @@ export default function App() {
   // Remember paper, style and album choices for the next visit.
   useEffect(() => saveOptions(options), [options])
 
-  // Route protection: Workspace requires an authenticated session.
-  // If not logged in, redirect to home and prompt login.
+  // Route enforcement:
+  // 1. If guest (!user): strictly only 'home' is allowed. Any visit to 'app' or 'sample' redirects to 'home' and opens login.
+  // 2. If logged in (user): strictly only 'app' is allowed. Logged-in users are in the application (Workspace) only.
   useEffect(() => {
-    if (!auth.loading && !auth.user && route !== 'home') {
-      go('home')
-      auth.openLogin()
+    if (auth.loading) return
+    if (!auth.user) {
+      if (route !== 'home') {
+        go('home')
+        auth.openLogin()
+      }
+    } else {
+      if (route !== 'app' && route !== 'sample') {
+        go('app')
+      }
     }
   }, [auth.loading, auth.user, route, go, auth])
 
@@ -83,12 +91,12 @@ export default function App() {
         }}
         onDeleteBook={auth.deleteBook}
       />
-      {route === 'home' || (!auth.user && !auth.loading) ? (
+      {!auth.user ? (
         <div className="home-scroll">
           <Home
             user={auth.user}
-            onStart={() => go('app')}
-            onSample={() => go('sample')}
+            onStart={() => auth.openSignup()}
+            onSample={() => auth.openLogin()}
             onOpenAuth={(tab) => (tab === 'login' ? auth.openLogin() : auth.openSignup())}
           />
         </div>
