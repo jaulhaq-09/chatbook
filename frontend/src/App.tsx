@@ -21,21 +21,20 @@ export default function App() {
   useEffect(() => saveOptions(options), [options])
 
   // Route enforcement:
-  // 1. If guest (!user): strictly only 'home' is allowed. Any visit to 'app' or 'sample' redirects to 'home' and opens login.
+  // 1. If guest (!user): strictly only 'home' is allowed. Any visit to 'app' or 'sample' redirects cleanly to 'home' without popping up modals.
   // 2. If logged in (user): strictly only 'app' is allowed. Logged-in users are in the application (Workspace) only.
   useEffect(() => {
     if (auth.loading) return
     if (!auth.user) {
       if (route !== 'home') {
         go('home')
-        auth.openLogin()
       }
     } else {
       if (route !== 'app' && route !== 'sample') {
         go('app')
       }
     }
-  }, [auth.loading, auth.user, route, go, auth])
+  }, [auth.loading, auth.user, route, go])
 
   // "Try a sample": only for logged-in users; if guest, prompt login first.
   const { phase, restoring, startSample } = session
@@ -67,9 +66,10 @@ export default function App() {
   )
 
   const handleLogout = useCallback(async () => {
+    auth.closeModal()
+    go('home')
     await auth.logout()
     await session.reset()
-    go('home')
   }, [auth, session, go])
 
   return (

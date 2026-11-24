@@ -7,7 +7,7 @@ interface Props {
   booksLoading: boolean
   currentJobId?: string | null
   onOpenLogin: () => void
-  onOpenSignup: () => void
+  onOpenSignup?: () => void
   onLogout: () => void
   onSelectBook: (jobId: string) => void
   onDeleteBook: (jobId: string) => void
@@ -19,7 +19,6 @@ export function UserMenu({
   booksLoading,
   currentJobId,
   onOpenLogin,
-  onOpenSignup,
   onLogout,
   onSelectBook,
   onDeleteBook,
@@ -44,9 +43,6 @@ export function UserMenu({
       <div className="auth-nav-buttons">
         <button type="button" className="auth-login-link" onClick={onOpenLogin}>
           Log in
-        </button>
-        <button type="button" className="auth-signup-btn" onClick={onOpenSignup}>
-          Sign up
         </button>
       </div>
     )
